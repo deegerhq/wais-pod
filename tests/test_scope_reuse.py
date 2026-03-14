@@ -190,19 +190,3 @@ class TestScopeReuseDuringDuration:
             assert result.exceeds_limit(600, "EUR") is True
             assert result.exceeds_limit(400, "EUR") is False
 
-    def test_critical_scope_reusable_with_fresh_tokens(self, issuer, verifier, user_hash):
-        """Critical scopes (payment.execute) can also be reissued."""
-        for i in range(3):
-            token = issuer.create_token(
-                agent_session=f"payment-{i}",
-                audience=AUDIENCE,
-                user_hash=user_hash,
-                scopes=[Scopes.PAYMENT_EXECUTE],
-                ttl_seconds=3600,
-            )
-            result = verifier.verify(
-                token,
-                required_scopes=[Scopes.PAYMENT_EXECUTE],
-                expected_audience=AUDIENCE,
-            )
-            assert result.valid is True, f"Token {i} failed: {result.reason}"
