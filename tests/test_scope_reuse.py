@@ -9,7 +9,6 @@ Verifies that:
 
 from pod.issuer import PoDIssuer
 from pod.verifier import PoDVerifier
-from pod.token import DelegationPayload
 from pod.scopes import Scopes
 
 from tests.conftest import PLATFORM_URL, AUDIENCE
