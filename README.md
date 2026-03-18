@@ -165,6 +165,47 @@ PoD defines a taxonomy of scopes by vertical:
 | `document.request` | Request documents | High |
 | `records.access` | Access medical records | Critical |
 
+### Education
+| Scope | Description | Risk Level |
+|-------|-------------|------------|
+| `course.browse` | Search and view courses | Low |
+| `course.enroll` | Enroll in a course | High |
+| `course.drop` | Drop/withdraw from a course | High |
+| `assignment.submit` | Submit coursework | High |
+| `grades.access` | View grades and transcripts | Medium |
+| `certificate.request` | Request completion certificates | Medium |
+
+### Real Estate
+| Scope | Description | Risk Level |
+|-------|-------------|------------|
+| `listing.browse` | Search properties | Low |
+| `listing.compare` | Access detailed pricing/history | Low |
+| `tour.schedule` | Schedule property viewings | Medium |
+| `application.submit` | Submit rental/purchase applications | High |
+| `lease.sign` | Sign a lease or agreement | Critical |
+| `maintenance.request` | Submit maintenance requests | Medium |
+
+### Social Media & Content
+| Scope | Description | Risk Level |
+|-------|-------------|------------|
+| `content.read` | Browse feeds and profiles | Low |
+| `content.create` | Create posts/comments | Medium |
+| `content.delete` | Delete own content | High |
+| `profile.modify` | Update profile information | Medium |
+| `messaging.read` | Read messages/notifications | Medium |
+| `messaging.send` | Send messages | High |
+| `account.settings` | Modify account settings | High |
+
+### IoT & Smart Home
+| Scope | Description | Risk Level |
+|-------|-------------|------------|
+| `device.read` | View device status/sensor data | Low |
+| `device.control` | Control devices (on/off, adjust) | Medium |
+| `automation.manage` | Create/modify automation rules | High |
+| `firmware.update` | Trigger firmware updates | High |
+| `access.grant` | Grant device access to others | Critical |
+| `device.remove` | Remove/unpair a device | High |
+
 ---
 
 ## Confirmation Protocol
@@ -332,6 +373,46 @@ token = issuer.create_token(
     },
     ttl_seconds=3600,
 )
+```
+
+### Token Revocation (Site-side)
+
+```python
+from pod import PoDVerifier, RevocationList
+
+# Set up verifier as usual
+verifier = PoDVerifier()
+verifier.add_trusted_platform_pem("https://platform.example.com", public_key_pem)
+
+# Fetch and set the platform's revocation list (do this periodically)
+import json, urllib.request
+resp = urllib.request.urlopen("https://platform.example.com/.well-known/wais-revocation")
+revocation_list = RevocationList.from_dict(json.loads(resp.read()))
+verifier.set_revocation_list(revocation_list)
+
+# Verify as normal — revoked tokens are now automatically rejected
+result = verifier.verify(token_string, expected_audience="https://your-site.com")
+if not result.valid:
+    print(result.reason)              # "Token revoked"
+    print(result.revocation_reason)   # "user_revoked"
+```
+
+### Manage a Revocation List (Platform-side)
+
+```python
+from pod import RevocationList
+
+# Create a revocation list for your platform
+rev_list = RevocationList(issuer="https://your-platform.com", ttl_seconds=120)
+
+# Revoke a token
+rev_list.revoke("token-jti-abc", reason="user_revoked")
+
+# Serialize for publishing at /.well-known/wais-revocation
+data = rev_list.to_dict()
+
+# Prune entries for tokens that have naturally expired
+rev_list.prune(max_token_exp=int(time.time()) - 3600)
 ```
 
 ---

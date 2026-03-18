@@ -329,6 +329,51 @@ WAIS defines a taxonomy of scopes to ensure consistency across implementations. 
 | `prescription.renew` | Request prescription renewals | High |
 | `records.access` | Retrieve test results | Critical |
 
+### 8.6 Education
+
+| Scope | Allows | Risk Level |
+|-------|--------|------------|
+| `course.browse` | Search and view courses or programs | Low |
+| `course.enroll` | Enroll in a course or program | High |
+| `course.drop` | Drop or withdraw from a course | High |
+| `assignment.submit` | Submit coursework or assignments | High |
+| `grades.access` | View grades and transcripts | Medium |
+| `certificate.request` | Request completion certificates | Medium |
+
+### 8.7 Real Estate
+
+| Scope | Allows | Risk Level |
+|-------|--------|------------|
+| `listing.browse` | Search properties | Low |
+| `listing.compare` | Access detailed pricing and history | Low |
+| `tour.schedule` | Schedule property viewings | Medium |
+| `application.submit` | Submit rental or purchase applications | High |
+| `lease.sign` | Sign a lease or agreement | Critical |
+| `maintenance.request` | Submit maintenance requests | Medium |
+
+### 8.8 Social Media & Content
+
+| Scope | Allows | Risk Level |
+|-------|--------|------------|
+| `content.read` | Browse feeds and profiles | Low |
+| `content.create` | Create posts or comments | Medium |
+| `content.delete` | Delete own content | High |
+| `profile.modify` | Update profile information | Medium |
+| `messaging.read` | Read messages and notifications | Medium |
+| `messaging.send` | Send messages | High |
+| `account.settings` | Modify account settings | High |
+
+### 8.9 IoT & Smart Home
+
+| Scope | Allows | Risk Level |
+|-------|--------|------------|
+| `device.read` | View device status and sensor data | Low |
+| `device.control` | Control devices (on/off, adjust) | Medium |
+| `automation.manage` | Create or modify automation rules | High |
+| `firmware.update` | Trigger firmware updates | High |
+| `access.grant` | Grant device access to others | Critical |
+| `device.remove` | Remove or unpair a device | High |
+
 ---
 
 ## 9. Use Cases in Detail
@@ -377,6 +422,67 @@ A user needs to renew their driver's license. The agent:
 
 Turning a multi-hour bureaucratic process into a 2-minute interaction.
 
+### 9.5 Continuing Education
+
+A user tells their agent: *"Find me a Python data science course under $50, enroll me, and track my deadlines."*
+
+The agent:
+
+1. Searches multiple WAIS-compliant education platforms (`course.browse`).
+2. Compares course ratings, prices, and schedules.
+3. Presents the top options to the user for selection.
+4. Upon approval, enrolls the user in the chosen course (`course.enroll` with confirmation).
+5. Monitors assignment deadlines and submits completed coursework (`assignment.submit` with confirmation).
+6. Checks grades as they're posted (`grades.access`).
+7. Requests the completion certificate when the course is finished (`certificate.request`).
+
+The user completes an entire learning journey without navigating a single platform UI.
+
+### 9.6 Apartment Hunting
+
+A user asks: *"Find me a 2-bedroom apartment near downtown under $2000/month and schedule tours for the top 3."*
+
+The agent:
+
+1. Searches multiple rental platforms simultaneously (`listing.browse`).
+2. Compares pricing, amenities, and neighborhood data (`listing.compare`).
+3. Filters results by the user's criteria and ranks them.
+4. Presents the shortlist: *"Found 12 options, here are the top 3. Schedule tours?"*
+5. Upon approval, schedules viewings for each (`tour.schedule` with confirmation).
+6. After the user selects a unit, submits the rental application (`application.submit` with confirmation).
+7. When approved, presents the lease for the user to sign (`lease.sign` with critical confirmation).
+
+Post-move-in, the agent can submit maintenance requests (`maintenance.request`) when issues arise.
+
+### 9.7 Social Media Management
+
+A user says: *"Post my product launch announcement across all my social channels."*
+
+The agent:
+
+1. Reads the user's profile information across platforms (`content.read`).
+2. Drafts platform-appropriate versions of the announcement.
+3. Presents all drafts for user review: *"Here are your posts for Twitter, LinkedIn, and Instagram. Approve?"*
+4. Upon approval, publishes each post (`content.create` with confirmation).
+5. Monitors responses and messages (`messaging.read`).
+6. Flags important messages that need the user's direct reply.
+
+If the user later wants to remove a post, the agent handles deletion (`content.delete` with confirmation) across all platforms in one action.
+
+### 9.8 Smart Home Automation
+
+A user says: *"Set my home to vacation mode — lower the thermostat, turn on random lights, and lock all doors."*
+
+The agent:
+
+1. Reads current device states across the smart home system (`device.read`).
+2. Presents the proposed changes: *"I'll set thermostat to 15°C, enable random light schedule, and lock 3 doors. Confirm?"*
+3. Upon approval, adjusts each device (`device.control` with confirmation).
+4. Creates an automation rule to randomize lights daily (`automation.manage` with confirmation).
+5. Monitors device status for anomalies while the user is away.
+
+No new access is granted to others (`access.grant` is not requested), keeping the home secure. When the user returns, the agent reverses the changes in one command.
+
 ---
 
 ## 10. Adoption Path
@@ -413,6 +519,30 @@ This mirrors the early days of e-commerce: the first retailers to accept online 
 4. **Rate Limiting** — Sites should implement per-agent rate limits separate from human rate limits.
 5. **Audit Logging** — All agent actions must be logged with the agent's identity and delegation context for accountability.
 6. **Revocation** — Users must be able to revoke agent permissions at any time via their agent platform. Sites should support token revocation checks.
+
+   **Revocation List Protocol:** Agent platforms MUST publish a JSON revocation list at `/.well-known/wais-revocation` containing all currently revoked tokens that have not yet expired. The list format is:
+
+   ```json
+   {
+     "version": 1,
+     "issuer": "https://agent-platform.com",
+     "published_at": 1708617600,
+     "ttl_seconds": 300,
+     "entries": [
+       {
+         "jti": "token-uuid",
+         "revoked_at": 1708617500,
+         "reason": "user_revoked"
+       }
+     ]
+   }
+   ```
+
+   - **`ttl_seconds`**: Cache duration (60–300 seconds). Websites SHOULD re-fetch the list after this period.
+   - **`reason`**: One of `user_revoked`, `platform_revoked`, `compromised`, or `superseded`.
+   - **Pruning**: Entries for tokens past their `exp` timestamp MAY be removed, as expired tokens are already rejected by the verifier.
+   - **Verification**: Websites that support revocation checking SHOULD fetch the revocation list from the issuing platform periodically and reject tokens whose `jti` appears in the list. Revocation checking is opt-in — verifiers without a configured revocation list continue to operate as before.
+   - **Recommendation**: Use short token lifetimes (5–10 minutes) to minimize the window between revocation and enforcement.
 7. **Platform Registry** — A public registry of trusted agent platforms and their public keys enables sites to verify agent identities.
 
 ---

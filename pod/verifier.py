@@ -18,6 +18,7 @@ from cryptography.hazmat.primitives.asymmetric import ec, utils
 from cryptography.exceptions import InvalidSignature
 
 from pod.token import PoDToken, DelegationPayload, Constraints
+from pod.revocation import RevocationList
 
 
 @dataclass
@@ -27,6 +28,7 @@ class VerificationResult:
     valid: bool
     token: Optional[PoDToken] = None
     reason: Optional[str] = None
+    revocation_reason: Optional[str] = None
 
     def requires_confirmation(self, action_amount: float = 0, currency: str = "EUR") -> bool:
         """Check if the action requires user confirmation."""
@@ -63,6 +65,7 @@ class PoDVerifier:
         self._allow_expired = allow_expired
         self._clock_skew_seconds = clock_skew_seconds
         self._seen_jtis: set[str] = set()
+        self._revocation_list: Optional[RevocationList] = None
 
         if trusted_platforms:
             for platform_url, key_path in trusted_platforms.items():
@@ -82,6 +85,10 @@ class PoDVerifier:
         if not isinstance(public_key, ec.EllipticCurvePublicKey):
             raise ValueError(f"Expected EC public key for {platform_url}")
         self._platform_keys[platform_url] = public_key
+
+    def set_revocation_list(self, revocation_list: Optional[RevocationList]) -> None:
+        """Set or clear the revocation list used during verification."""
+        self._revocation_list = revocation_list
 
     def verify(
         self,
@@ -180,6 +187,17 @@ class PoDVerifier:
             if token.jti in self._seen_jtis:
                 return VerificationResult(valid=False, token=token, reason="Token already used (replay)")
             self._seen_jtis.add(token.jti)
+
+        # 8b. Revocation check (opt-in)
+        if self._revocation_list and token.jti:
+            entry = self._revocation_list.is_revoked(token.jti)
+            if entry:
+                return VerificationResult(
+                    valid=False,
+                    token=token,
+                    reason="Token revoked",
+                    revocation_reason=entry.reason,
+                )
 
         # 9. Check audience
         if expected_audience and token.aud != expected_audience:

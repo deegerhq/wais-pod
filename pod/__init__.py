@@ -17,6 +17,7 @@ from pod.issuer import PoDIssuer
 from pod.verifier import PoDVerifier
 from pod.confirmation import ConfirmationChallenge, ConfirmationResponse
 from pod.scopes import Scopes
+from pod.revocation import RevocationList, RevocationEntry
 
 __all__ = [
     "PoDToken",
@@ -27,4 +28,6 @@ __all__ = [
     "ConfirmationChallenge",
     "ConfirmationResponse",
     "Scopes",
+    "RevocationList",
+    "RevocationEntry",
 ]

@@ -1,0 +1,83 @@
+schema: spec-driven
+
+context: |
+  # Proof of Delegation (PoD) — WAIS Authentication Protocol
+
+  ## What this project is
+  PoD is an open-source authentication protocol that enables AI agents to prove
+  they are acting on behalf of a real human user — with verifiable, scoped, and
+  time-limited authorization. It is the authentication layer of the WAIS (Web
+  Agent Interaction Standard) initiative by Deeger.
+
+  ## Tech stack
+  - Language: Python 3
+  - Cryptography: JWT with ES256 (ECDSA P-256)
+  - Web framework: FastAPI (platform & demo store servers)
+  - Testing: pytest
+  - MCP: Model Context Protocol server for Claude Desktop integration
+
+  ## Project structure
+  - pod/              Core library (issuer, verifier, token, scopes, confirmation)
+  - pod_platform/     Platform server — issues PoD tokens (:8000)
+  - demo_store/       Demo e-commerce store — verifies PoD tokens (:8001)
+  - mcp_server/       MCP server for Claude Desktop
+  - spec/             WAIS specification draft v0.1
+  - tests/            pytest test suite
+  - examples/         Usage examples (full_flow.py)
+
+  ## Key concepts
+  - Scopes: "namespace.action" format (e.g., catalog.browse, checkout.execute)
+  - Risk levels: low, medium, high, critical — determines confirmation requirements
+  - Verticals: groups of scopes by industry (e-commerce, travel, finance, govt, healthcare)
+  - PoD token: JWT-like credential with delegation payload (user_hash, scopes, constraints)
+  - Confirmation protocol: challenge-response for high-risk actions
+
+  ## Conventions
+  - Scope constants are UPPER_SNAKE_CASE in pod/scopes.py (e.g., CATALOG_BROWSE = "catalog.browse")
+  - Risk mappings live in the RISK_LEVELS dict in the Scopes class
+  - Each vertical can have convenience methods (e.g., ecommerce_read(), travel_full())
+  - Spec (spec/WAIS-Spec-Draft-v0.1.md), README.md, and pod/scopes.py must stay in sync
+  - Tests use pytest fixtures defined in tests/conftest.py
+
+  ## Git workflow
+  ### Branches
+  - main → production (live code, always deployable, protected — no direct pushes)
+  - develop → integration/staging (where features are combined and tested, can be unstable)
+  - feature/* → new features (one feature = one branch, created from develop, merged back to develop)
+  - bugfix/* → bug fixes found in develop/staging (created from develop, merged back to develop)
+  - hotfix/* → urgent production fixes (created from main, merged into both main and develop)
+
+  ### Commit conventions
+  - Use conventional commits: feat:, fix:, docs:, chore:
+  - Commits always authored as user (never as AI/root)
+  - Never include Co-Authored-By AI lines in commit messages
+  - Pull request required for merge — no direct pushes to main or develop
+
+  ## Current status
+  - Spec: Draft v0.1
+  - Existing verticals: E-Commerce, Travel & Hospitality, Financial Services, Government & Public Services, Healthcare
+  - Roadmap items not yet done: Node.js impl, Go impl, Platform Registry, WAIS Lighthouse, JSON Schema definitions, security audit
+
+rules:
+  proposal:
+    - Reference existing verticals as precedent when proposing new ones
+    - Explain the real-world agent use case for each proposed change
+    - Include a "Non-goals" section to keep scope clear
+    - Keep proposals concise — under 600 words
+  specs:
+    - Every scope must follow the "namespace.action" naming convention
+    - Every scope must have an assigned risk level (low/medium/high/critical)
+    - Risk levels must be justified by the action's reversibility and financial/legal impact
+    - Group scopes by vertical with a clear rationale for the vertical's inclusion
+  design:
+    - List all files that need changes with the specific modifications for each
+    - Follow existing code patterns exactly (constants, risk mappings, convenience methods)
+    - Consider backwards compatibility — new scopes must not conflict with existing ones
+    - Include how the spec document and README tables will be updated
+  tasks:
+    - Each task should touch one file or one logical unit at a time
+    - Always include a task for adding/updating tests
+    - Always include a task for updating the spec document
+    - Always include a task for updating the README
+    - Order tasks so source-of-truth (scopes.py) is updated before docs
+    - Keep tasks small enough to review in a single diff

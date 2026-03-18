@@ -44,6 +44,39 @@ class Scopes:
     PRESCRIPTION_RENEW = "prescription.renew"
     RECORDS_ACCESS = "records.access"
 
+    # === Education ===
+    COURSE_BROWSE = "course.browse"
+    COURSE_ENROLL = "course.enroll"
+    COURSE_DROP = "course.drop"
+    ASSIGNMENT_SUBMIT = "assignment.submit"
+    GRADES_ACCESS = "grades.access"
+    CERTIFICATE_REQUEST = "certificate.request"
+
+    # === Real Estate ===
+    LISTING_BROWSE = "listing.browse"
+    LISTING_COMPARE = "listing.compare"
+    TOUR_SCHEDULE = "tour.schedule"
+    APPLICATION_SUBMIT = "application.submit"
+    LEASE_SIGN = "lease.sign"
+    MAINTENANCE_REQUEST = "maintenance.request"
+
+    # === Social Media & Content ===
+    CONTENT_READ = "content.read"
+    CONTENT_CREATE = "content.create"
+    CONTENT_DELETE = "content.delete"
+    PROFILE_MODIFY = "profile.modify"
+    MESSAGING_READ = "messaging.read"
+    MESSAGING_SEND = "messaging.send"
+    ACCOUNT_SETTINGS = "account.settings"
+
+    # === IoT & Smart Home ===
+    DEVICE_READ = "device.read"
+    DEVICE_CONTROL = "device.control"
+    AUTOMATION_MANAGE = "automation.manage"
+    FIRMWARE_UPDATE = "firmware.update"
+    ACCESS_GRANT = "access.grant"
+    DEVICE_REMOVE = "device.remove"
+
     # Risk level mappings
     RISK_LEVELS = {
         # E-Commerce
@@ -76,6 +109,35 @@ class Scopes:
         "appointment.schedule": "medium",
         "prescription.renew": "high",
         "records.access": "critical",
+        # Education
+        "course.browse": "low",
+        "course.enroll": "high",
+        "course.drop": "high",
+        "assignment.submit": "high",
+        "grades.access": "medium",
+        "certificate.request": "medium",
+        # Real Estate
+        "listing.browse": "low",
+        "listing.compare": "low",
+        "tour.schedule": "medium",
+        "application.submit": "high",
+        "lease.sign": "critical",
+        "maintenance.request": "medium",
+        # Social Media & Content
+        "content.read": "low",
+        "content.create": "medium",
+        "content.delete": "high",
+        "profile.modify": "medium",
+        "messaging.read": "medium",
+        "messaging.send": "high",
+        "account.settings": "high",
+        # IoT & Smart Home
+        "device.read": "low",
+        "device.control": "medium",
+        "automation.manage": "high",
+        "firmware.update": "high",
+        "access.grant": "critical",
+        "device.remove": "high",
     }
 
     @classmethod
@@ -108,4 +170,42 @@ class Scopes:
         return [
             cls.AVAILABILITY_SEARCH, cls.BOOKING_CREATE,
             cls.BOOKING_MODIFY, cls.BOOKING_CANCEL, cls.CLAIM_SUBMIT,
+        ]
+
+    @classmethod
+    def education_read(cls) -> list[str]:
+        """Read-only education scopes."""
+        return [cls.COURSE_BROWSE, cls.GRADES_ACCESS]
+
+    @classmethod
+    def education_full(cls) -> list[str]:
+        """Full education scopes."""
+        return [
+            cls.COURSE_BROWSE, cls.COURSE_ENROLL, cls.COURSE_DROP,
+            cls.ASSIGNMENT_SUBMIT, cls.GRADES_ACCESS, cls.CERTIFICATE_REQUEST,
+        ]
+
+    @classmethod
+    def realestate_full(cls) -> list[str]:
+        """Full real estate scopes."""
+        return [
+            cls.LISTING_BROWSE, cls.LISTING_COMPARE, cls.TOUR_SCHEDULE,
+            cls.APPLICATION_SUBMIT, cls.LEASE_SIGN, cls.MAINTENANCE_REQUEST,
+        ]
+
+    @classmethod
+    def social_full(cls) -> list[str]:
+        """Full social media scopes."""
+        return [
+            cls.CONTENT_READ, cls.CONTENT_CREATE, cls.CONTENT_DELETE,
+            cls.PROFILE_MODIFY, cls.MESSAGING_READ, cls.MESSAGING_SEND,
+            cls.ACCOUNT_SETTINGS,
+        ]
+
+    @classmethod
+    def iot_full(cls) -> list[str]:
+        """Full IoT & smart home scopes."""
+        return [
+            cls.DEVICE_READ, cls.DEVICE_CONTROL, cls.AUTOMATION_MANAGE,
+            cls.FIRMWARE_UPDATE, cls.ACCESS_GRANT, cls.DEVICE_REMOVE,
         ]
